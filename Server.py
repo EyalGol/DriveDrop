@@ -8,14 +8,11 @@ import sys
 from select import select
 
 IP = "localhost"
-PORT = 6666
+PORT = 6667
 ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
-INTERRUPT = b"/S/s0101s/S/"
-
-
-
+SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/"}
 
 class Server:
     def __init__(self):
@@ -54,8 +51,8 @@ class Server:
 
     def handle_receiving(self, conn):
         # receiving a code (what operation to do)
-        code = int(conn.recv(8))
-        if code == 1:  # file transfer
+        data = conn.recv(128)
+        if SPECIAL_CHARS["recv_file_command"] in data:  # file transfer
             self.recv_files(conn)
 
     def handle_sending(self, conn):
@@ -63,15 +60,17 @@ class Server:
 
     def recv_files(self, conn):
         key = self.clients[conn]
-        file_name = conn.recv(1024).decode('utf8')
+        conn.send(SPECIAL_CHARS["continue"])
+        file_name = conn.recv(2056).decode("utf8")
+        conn.send(SPECIAL_CHARS["continue"])
         path = os.path.join(".", "tmp", "(senc){}".format(file_name))
         with open(path, "wb") as f:
             while True:
                 data = conn.recv(2056)
-                if data == INTERRUPT:
+                if data == SPECIAL_CHARS["interrupt"]:
                     break
-                elif INTERRUPT in data:
-                    data.strip(INTERRUPT)
+                elif SPECIAL_CHARS["interrupt"] in data:
+                    data.strip(SPECIAL_CHARS["interrupt"])
                     f.write(data)
                     break
                 f.write(data)
@@ -79,6 +78,7 @@ class Server:
         print("done...")
         AesUtil.decrypt_file(path, key)
         print("done...")
+
 
 if __name__ == "__main__":
     server = Server()
