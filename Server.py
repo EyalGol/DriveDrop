@@ -64,7 +64,8 @@ class Server:
     def recv_files(self, conn):
         key = self.clients[conn]
         file_name = conn.recv(1024).decode('utf8')
-        with open("./tmp/(senc){}".format(file_name), "wb") as f:
+        path = os.path.join(".", "tmp", "(senc){}".format(file_name))
+        with open(path, "wb") as f:
             while True:
                 data = conn.recv(2056)
                 if data == INTERRUPT:
@@ -76,7 +77,8 @@ class Server:
                 f.write(data)
                 print("receiving...")
         print("done...")
-
+        AesUtil.decrypt_file(path, key)
+        print("done...")
 
 if __name__ == "__main__":
     server = Server()

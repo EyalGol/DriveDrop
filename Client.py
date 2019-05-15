@@ -24,8 +24,7 @@ class Client:
         self.diffie.send(self.socket, self.public_key)
 
     def send_file(self, path):
-        file_name = path
-        file_name = file_name.split("/")[-1]
+        file_name = os.path.split(path)[-1]
         path = AesUtil.encrypt_file(path, self.key)
         self.socket.send(pack_int(1))
         sleep(0.5)

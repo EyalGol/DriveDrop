@@ -1,24 +1,25 @@
 from Crypto.PublicKey import RSA
-import _pickle as pickle
 from _pickle import dumps, loads
 from Crypto.Cipher import AES, PKCS1_OAEP
 from base64 import b64encode
 from base64 import b64decode
 from random import randint
-import sys
 from Crypto.Hash import SHA256
 from Crypto import Random
+import os
+
 KEY_LENGTH = 1024
 
 BLOCK_SIZE = 16
-FILE_CHUNK = 1024*16
+FILE_CHUNK = 1024 * 16
 INTERRUPT = b'\u0101'
 PAD = b'0'
 
+
 class AesUtil(object):
     """
-        responsible for the AES encryption and decryption
-        """
+    responsible for the AES encryption and decryption
+    """
 
     # create key from int (Diffie Helmen)
     @staticmethod
@@ -57,8 +58,7 @@ class AesUtil(object):
 
     @staticmethod
     def encrypt_file(path, key):
-        new_path = path
-        new_path = './tmp/(enc){}'.format(path.split('/')[-1])
+        new_path = os.path.join(".", "tmp", "(enc){}".format(os.path.split(path)[-1]))
         with open(path, 'rb') as rf:
             IV = Random.new().read(16)
             cipher = AesUtil.create_key(key, IV)
@@ -66,7 +66,7 @@ class AesUtil(object):
                 wf.write(IV)
                 data = rf.read(FILE_CHUNK)
                 if len(data) % BLOCK_SIZE != 0:
-                        data = AesUtil.add_padding(data)
+                    data = AesUtil.add_padding(data)
                 while data:
                     enc_data = cipher.encrypt(data)
                     wf.write(enc_data)
@@ -77,20 +77,18 @@ class AesUtil(object):
 
     @staticmethod
     def decrypt_file(path, key):
-        new_path = path
-        new_path = './tmp/{}'.format(path.split('/')[-1][5:])
+        new_path = os.path.join(".", "tmp", "(sdec){}".format(os.path.split(path)[-1][5:]))
         with open(path, 'rb') as rf:
             IV = rf.read(16)
             cipher = AesUtil.create_key(key, IV)
             with open(new_path, 'wb') as wf:
                 data = rf.read(FILE_CHUNK)
                 while data:
+                    print("decrypting...")
                     dec_data = cipher.decrypt(data)
                     wf.write(AesUtil.strip_padding(dec_data))
                     data = rf.read(FILE_CHUNK)
         return new_path
-
-
 
 
 class RsaUtil:
@@ -138,7 +136,7 @@ class DiffieUtil:
 
     # diffie helmen algorithm
     def diffie_algo(self, b, p):
-        return b**p % self.mod
+        return b ** p % self.mod
 
     # sending end of diffie helmen with optional rsa key
     def send(self, conn, key=None):
@@ -157,10 +155,13 @@ class DiffieUtil:
         return self.key
 
 
-
 def pack(data):
     return b64encode(dumps(data).encode("utf8"))
+
+
 def unpack(data):
     return loads(b64decode(data).decode("utf8"))
+
+
 def pack_int(data):
     return str(data).encode("utf8")
