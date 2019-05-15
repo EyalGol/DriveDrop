@@ -85,7 +85,12 @@ class AesUtil(object):
                 data = rf.read(FILE_CHUNK)
                 while data:
                     print("decrypting...")
-                    dec_data = cipher.decrypt(data)
+                    try:
+                        dec_data = cipher.decrypt(data)
+                        if not dec_data:
+                            break
+                    except ValueError:
+                        break
                     wf.write(AesUtil.strip_padding(dec_data))
                     data = rf.read(FILE_CHUNK)
         return new_path

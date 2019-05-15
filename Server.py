@@ -8,7 +8,7 @@ import sys
 from select import select
 
 IP = "localhost"
-PORT = 6667
+PORT = 6668
 ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
@@ -82,7 +82,7 @@ class Server:
 
 if __name__ == "__main__":
     server = Server()
-    sleep(0.2)
+    sleep(0.5)
     while input("enter stop to close the server: ") != "stop":
         pass
     server.socket.close()

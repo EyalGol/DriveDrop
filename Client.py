@@ -6,7 +6,7 @@ from Crypto.PublicKey import RSA
 import os
 
 IP = "localhost"
-PORT = 6667
+PORT = 6668
 ADDRESS = (IP, PORT)
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/"}
 
