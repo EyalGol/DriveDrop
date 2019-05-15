@@ -8,11 +8,12 @@ import sys
 from select import select
 
 IP = "localhost"
-PORT = 6668
+PORT = 6669
 ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/"}
+
 
 class Server:
     def __init__(self):
@@ -65,6 +66,7 @@ class Server:
         conn.send(SPECIAL_CHARS["continue"])
         path = os.path.join(".", "tmp", "(senc){}".format(file_name))
         with open(path, "wb") as f:
+            print("receiving...")
             while True:
                 data = conn.recv(2056)
                 if data == SPECIAL_CHARS["interrupt"]:
@@ -74,10 +76,15 @@ class Server:
                     f.write(data)
                     break
                 f.write(data)
-                print("receiving...")
         print("done...")
-        AesUtil.decrypt_file(path, key)
-        print("done...")
+        conn.send(SPECIAL_CHARS["continue"])
+        data = conn.recv(128)
+        dest_path = os.path.join(".", "file_db", "{}".format(os.path.split(path)[-1][6:]))
+        AesUtil.decrypt_file(path, key, dest_path)
+        os.remove(path)
+        if data == SPECIAL_CHARS["continue"]:
+            conn.send(SPECIAL_CHARS["continue"])
+            self.handle_receiving(conn)
 
 
 if __name__ == "__main__":

@@ -51,19 +51,26 @@ class AesUtil(object):
 
     # Encrypt the given data with the encryption cypher
     @staticmethod
-    def decrypt_object(packet_object, key):
-        enc_object = unpack(packet_object)
+    def decrypt_object(packed_object, key):
+        enc_object = unpack(packed_object)
         object = key.decrypt(enc_object)
         return object
 
     @staticmethod
-    def encrypt_file(path, key):
-        new_path = os.path.join(".", "tmp", "(enc){}".format(os.path.split(path)[-1]))
+    def encrypt_file(path, key, new_path=None):
+        # generate a new path
+        if not new_path:
+            new_path = os.path.join(".", "tmp", "(enc){}".format(os.path.split(path)[-1]))
+        while os.path.exists(new_path):  # if path already elitist try put copy behind it
+            copy_path = list(os.path.split(new_path))
+            copy_path[-1] = "(copy)" + copy_path[-1]
+            new_path = os.path.join(*copy_path)
+        # read old file and write the decrypted file into new_path
         with open(path, 'rb') as rf:
-            IV = Random.new().read(16)
-            cipher = AesUtil.create_key(key, IV)
+            iv = Random.new().read(16)
+            cipher = AesUtil.create_key(key, iv)
             with open(new_path, 'wb') as wf:
-                wf.write(IV)
+                wf.write(iv)
                 data = rf.read(FILE_CHUNK)
                 if len(data) % BLOCK_SIZE != 0:
                     data = AesUtil.add_padding(data)
@@ -76,15 +83,21 @@ class AesUtil(object):
         return new_path
 
     @staticmethod
-    def decrypt_file(path, key):
-        new_path = os.path.join(".", "tmp", "(sdec){}".format(os.path.split(path)[-1][5:]))
+    def decrypt_file(path, key, new_path=None):
+        # generate a new path
+        if not new_path:
+            new_path = os.path.join(".", "tmp", "(dec){}".format(os.path.split(path)[-1][5:]))
+        while os.path.exists(new_path):  # if path already elitist try put copy behind it
+            copy_path = list(os.path.split(new_path))
+            copy_path[-1] = "(copy)"+copy_path[-1]
+            new_path = os.path.join(*copy_path)
         with open(path, 'rb') as rf:
-            IV = rf.read(16)
-            cipher = AesUtil.create_key(key, IV)
+            iv = rf.read(16)
+            cipher = AesUtil.create_key(key, iv)
             with open(new_path, 'wb') as wf:
                 data = rf.read(FILE_CHUNK)
+                print("decrypting...")
                 while data:
-                    print("decrypting...")
                     try:
                         dec_data = cipher.decrypt(data)
                         if not dec_data:
@@ -93,6 +106,7 @@ class AesUtil(object):
                         break
                     wf.write(AesUtil.strip_padding(dec_data))
                     data = rf.read(FILE_CHUNK)
+        print("done...")
         return new_path
 
 

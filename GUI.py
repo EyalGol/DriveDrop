@@ -1,5 +1,6 @@
 import wx
 import os
+from threading import Thread
 from Client import *
 
 CLIENT = None
@@ -20,7 +21,12 @@ class MyFileDropTarget(wx.FileDropTarget):
         for file_path in file_names:
             try:
                 self.window.updateText(file_path + '\n')
-                CLIENT.send_file(file_path)
+                print(file_path)
+                if file_path == file_names[-1]:
+                    CLIENT.send_file(file_path, True)
+                else:
+                    CLIENT.send_file(file_path, False)
+
             except Exception as err:
                 print(str(err))
         return True
