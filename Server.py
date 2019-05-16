@@ -6,13 +6,16 @@ from Encryption import *
 from time import sleep
 import sys
 from select import select
+import requests
+import json
 
 IP = "localhost"
 PORT = 6669
 ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
-SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/"}
+SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/", 
+                 "authenticate": b"/a0101a/"}
 
 
 class Server:
@@ -49,14 +52,21 @@ class Server:
                 self.handle_receiving(conn)
             for conn in wlist:
                 self.handle_sending(conn)
+            for conn in elist:
+                self.handle_errors(conn)
 
     def handle_receiving(self, conn):
         # receiving a code (what operation to do)
         data = conn.recv(128)
-        if SPECIAL_CHARS["recv_file_command"] in data:  # file transfer
+        if SPECIAL_CHARS["recv_file_command"] in data:  # recv file transfer
             self.recv_files(conn)
-
+        if SPECIAL_CHARS["authenticate"]:  # authentication request
+            self.auth(conn)
+            
     def handle_sending(self, conn):
+        pass
+    
+    def handle_errors(self, conn):
         pass
 
     def recv_files(self, conn):
@@ -85,6 +95,16 @@ class Server:
         if data == SPECIAL_CHARS["continue"]:
             conn.send(SPECIAL_CHARS["continue"])
             self.handle_receiving(conn)
+
+    def auth(self, username, password):
+        data = requests.post('http://127.0.0.1:8000/rest-auth/login/',
+                             data={"username": username, "password": password})
+        if "key" in data.json():
+            data = requests.get('http://127.0.0.1:8000/users/').json()
+            for user in data:
+                if user["username"] == username:
+                    return user["groups"]
+        return False
 
 
 if __name__ == "__main__":

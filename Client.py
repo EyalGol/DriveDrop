@@ -8,7 +8,8 @@ import os
 IP = "localhost"
 PORT = 6669
 ADDRESS = (IP, PORT)
-SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/"}
+SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
+                 "authenticate": b"/a0101a/"}
 
 
 class Client:
@@ -44,3 +45,6 @@ class Client:
             self.socket.recv(128)
         os.remove(path)
         return True
+
+    def login(self, username, password):
+        self.socket.send(SPECIAL_CHARS["authenticate"])
