@@ -23,12 +23,12 @@ class MyFileDropTarget(wx.FileDropTarget):
                 self.window.updateText(file_path + '\n')
                 print(file_path)
                 if file_path == file_names[-1]:
-                    CLIENT.send_file(file_path, True)
+                    text = CLIENT.send_file(file_path, True)
                 else:
-                    CLIENT.send_file(file_path, False)
-
+                    text = CLIENT.send_file(file_path, False)
             except Exception as err:
                 print(str(err))
+        self.window.updateText("\n"+text+"\n")
         return True
 
 
@@ -102,7 +102,6 @@ class LoginDialog(wx.Dialog):
         username = self.user.GetValue()
         password = self.password.GetValue()
         groups = CLIENT.login(username, password)
-        print(groups)
         if groups:
             self.Destroy()
 
@@ -115,23 +114,30 @@ class RetrievePanel(wx.Panel):
         self.fileTextCtrl = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.HSCROLL | wx.TE_READONLY)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(lbl, 0, wx.ALL, 5)
-        sizer.Add(self.fileTextCtrl, 1, wx.EXPAND | wx.ALL, 5)
+        sizer.Add(self.fileTextCtrl, 8, wx.EXPAND | wx.ALL, 5)
 
-        self.retrieveTextCtrl = wx.TextCtrl(self)
-        sizer.Add(self.retrieveTextCtrl, 1, wx.EXPAND | wx.ALL, 5)
+        sizer_group = wx.BoxSizer(wx.HORIZONTAL)
 
         btn_refresh = wx.Button(self, label="refresh")
         btn_refresh.Bind(wx.EVT_BUTTON, self.refresh)
-        sizer.Add(btn_refresh, 0, wx.ALL | wx.BOTTOM | wx.LEFT, 5)
+        sizer_group.Add(btn_refresh, wx.RIGHT, wx.CENTER, 5)
 
-        btn_refresh = wx.Button(self, label="get")
+        self.retrieveTextCtrl = wx.TextCtrl(self)
+        sizer_group.Add(self.retrieveTextCtrl, wx.EXPAND | wx.LEFT | wx.RIGHT, wx.CENTER, 5)
+
+        btn_refresh = wx.Button(self, label="retrieve")
         btn_refresh.Bind(wx.EVT_BUTTON, self.retrieve_files)
-        sizer.Add(btn_refresh, 0, wx.ALL | wx.BOTTOM | wx.RIGHT, 5)
+        sizer_group.Add(btn_refresh, wx.LEFT, wx.CENTER, 5)
+
+        sizer.Add(sizer_group, 1, 0, 25)
 
         self.SetSizer(sizer)
 
     def retrieve_files(self, event=None):
-        print(self.retrieveTextCtrl.GetLineText(1))
+        global CLIENT
+        file_name = self.retrieveTextCtrl.GetLineText(0)
+        text = CLIENT.recv_files(file_name)
+        self.fileTextCtrl.AppendText("\n"+file_name+"\n")
 
     def refresh(self, event=None):
         global CLIENT
@@ -180,15 +186,15 @@ class Window(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
         self.Bind(wx.EVT_MENU, self.on_switch_panels, switch_panels_menu_item)
 
-    def on_switch_panels(self, event):
+    def on_switch_panels(self, event=None):
         # switch panels (login/ftp)
         if self.dnd_panel.IsShown():
-            self.SetTitle("Panel Two Showing")
+            self.SetTitle("Retrieve")
             self.dnd_panel.Hide()
             self.retrieve_panel.refresh()
             self.retrieve_panel.Show()
         else:
-            self.SetTitle("Panel One Showing")
+            self.SetTitle("Upload")
             self.dnd_panel.Show()
             self.retrieve_panel.Hide()
         self.Layout()

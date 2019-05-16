@@ -101,15 +101,21 @@ class AesUtil(object):
         """
         :return: returns (enc_data, iv)
         """
-        if not iv:
-            iv = Random.new().read(16)
-        cipher = AesUtil.create_key(key, iv)
-        return cipher.encrypt(AesUtil.add_padding(text.encode("utf8"))), iv
+        try:
+            if not iv:
+                iv = Random.new().read(16)
+            cipher = AesUtil.create_key(key, iv)
+            return cipher.encrypt(AesUtil.add_padding(text.encode("utf8"))), iv
+        except Exception as err:
+            print(err)
 
     @staticmethod
     def decrypt_plaintext(data, key, iv):
-        cipher = AesUtil.create_key(key, iv)
-        return AesUtil.strip_padding(cipher.decrypt(data)).decode("utf8")
+        try:
+            cipher = AesUtil.create_key(key, iv)
+            return AesUtil.strip_padding(cipher.decrypt(data)).decode("utf8")
+        except Exception as err:
+            print(err)
 
     @staticmethod
     def encrypt_login(username, password, key):
@@ -117,22 +123,27 @@ class AesUtil(object):
         :return: returns a json object with the ids of:
         (iv=iv, password="encrypted_password", username=" encrypted_username")
         """
-        password, iv = AesUtil.encrypt_plaintext(password, key)
-        username, iv = AesUtil.encrypt_plaintext(username, key, iv)
+        try:
+            password, iv = AesUtil.encrypt_plaintext(password, key)
+            username, iv = AesUtil.encrypt_plaintext(username, key, iv)
 
-        return dumps({'iv': iv, 'username': username, 'password': password})
+            return dumps({'iv': iv, 'username': username, 'password': password})
+        except Exception as err:
+            print(err)
 
     @staticmethod
     def decrypt_login(data, key):
         """
         :return: (username, password)
         """
-        data = loads(data)
-        iv = data["iv"]
-        username = AesUtil.decrypt_plaintext(data["username"], key, iv)
-        password = AesUtil.decrypt_plaintext(data["password"], key, iv)
-        return username, password
-
+        try:
+            data = loads(data)
+            iv = data["iv"]
+            username = AesUtil.decrypt_plaintext(data["username"], key, iv)
+            password = AesUtil.decrypt_plaintext(data["password"], key, iv)
+            return username, password
+        except Exception as err:
+            print(err)
 
 class RsaUtil:
     """
