@@ -1,10 +1,11 @@
 from Crypto.PublicKey import RSA
 from _pickle import dumps, loads
 from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.Signature import pkcs1_15
 from base64 import b64encode
 from base64 import b64decode
 from random import randint
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, SHA384
 from Crypto import Random
 import os
 
@@ -120,6 +121,7 @@ class RsaUtil:
     def __init__(self):
         self.private_key = RSA.generate(KEY_LENGTH)
         self.public_key = self.private_key.publickey()
+        self.signature = pkcs1_15.new(self.private_key)
 
     @staticmethod
     def pack_encrypt(data, key):  # encrypts data with the public rsa key
@@ -143,6 +145,14 @@ class RsaUtil:
     def decrypt(data, key):  # decrypts data with private rsa key
         cipher_rsa = PKCS1_OAEP.new(key)
         return cipher_rsa.decrypt(data)
+
+    @staticmethod
+    def sign_data(data, key):
+        return pkcs1_15.new(key).sign(SHA384.new(data))
+
+    @staticmethod
+    def verify_data(data, key, signature):
+        return pkcs1_15.new(key).verify(SHA384.new(data), signature)
 
 
 class DiffieUtil:
