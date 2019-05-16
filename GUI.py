@@ -94,10 +94,11 @@ class LoginDialog(wx.Dialog):
 
     def onLogin(self, event):
         """
-                   Check credentials and init client
-                   """
+        Check credentials and init client
+        """
         global CLIENT
-        CLIENT = Client()
+        if not CLIENT:
+            CLIENT = Client()
         username = self.user.GetValue()
         password = self.password.GetValue()
         groups = CLIENT.login(username, password)
