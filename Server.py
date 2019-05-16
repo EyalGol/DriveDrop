@@ -14,8 +14,8 @@ PORT = 6669
 ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
-SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/", 
-                 "authenticate": b"/a0101a/"}
+SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
+                 "authenticate": b"/a0101a/", "list_files": b"/r0101r/"}
 
 
 class Server:
@@ -29,17 +29,20 @@ class Server:
 
     def handle_new_connection(self):
         print("handling new connections")
-        while True:
-            conn = self.socket.accept()[0]
-            # send RSA key
-            conn.send(RSA.public_key.export_key())
-            # diffie helmen
-            diffie = DiffieUtil()
-            diffie.send(conn)
-            key = diffie.recv(conn, RSA.private_key)
-            print(key)
-            self.clients[conn] = key
-            print(conn, "has connected")
+        try:
+            while True:
+                conn = self.socket.accept()[0]
+                # send RSA key
+                conn.send(RSA.public_key.export_key())
+                # diffie helmen
+                diffie = DiffieUtil()
+                diffie.send(conn)
+                key = diffie.recv(conn, RSA.private_key)
+                print(key)
+                self.clients[conn] = key
+                print(conn, "has connected")
+        except ConnectionAbortedError or ConnectionResetError:
+            del self.clients[conn]
 
     def handle_connections(self):
         while True:
@@ -62,53 +65,59 @@ class Server:
             self.recv_files(conn)
         if SPECIAL_CHARS["authenticate"]:  # authentication request
             self.auth(conn)
-            
+
     def handle_sending(self, conn):
         pass
-    
+
     def handle_errors(self, conn):
         pass
 
     def recv_files(self, conn):
-        key = self.clients[conn]
-        conn.send(SPECIAL_CHARS["continue"])
-        file_name = conn.recv(2056).decode("utf8")
-        conn.send(SPECIAL_CHARS["continue"])
-        path = os.path.join(".", "tmp", "(senc){}".format(file_name))
-        with open(path, "wb") as f:
-            print("receiving...")
-            while True:
-                data = conn.recv(2056)
-                if data == SPECIAL_CHARS["interrupt"]:
-                    break
-                elif SPECIAL_CHARS["interrupt"] in data:
-                    data.strip(SPECIAL_CHARS["interrupt"])
-                    f.write(data)
-                    break
-                f.write(data)
-        print("done...")
-        conn.send(SPECIAL_CHARS["continue"])
-        data = conn.recv(128)
-        dest_path = os.path.join(".", "file_db", "{}".format(os.path.split(path)[-1][6:]))
-        AesUtil.decrypt_file(path, key, dest_path)
-        os.remove(path)
-        if data == SPECIAL_CHARS["continue"]:
+        try:
+            key = self.clients[conn]
             conn.send(SPECIAL_CHARS["continue"])
-            self.handle_receiving(conn)
+            file_name = conn.recv(2056).decode("utf8")
+            conn.send(SPECIAL_CHARS["continue"])
+            path = os.path.join(".", "tmp", "(senc){}".format(file_name))
+            with open(path, "wb") as f:
+                print("receiving...")
+                while True:
+                    data = conn.recv(2056)
+                    if data == SPECIAL_CHARS["interrupt"]:
+                        break
+                    elif SPECIAL_CHARS["interrupt"] in data:
+                        data.strip(SPECIAL_CHARS["interrupt"])
+                        f.write(data)
+                        break
+                    f.write(data)
+            print("done...")
+            conn.send(SPECIAL_CHARS["continue"])
+            data = conn.recv(128)
+            dest_path = os.path.join(".", "file_db", "{}".format(os.path.split(path)[-1][6:]))
+            AesUtil.decrypt_file(path, key, dest_path)
+            os.remove(path)
+            if data == SPECIAL_CHARS["continue"]:
+                conn.send(SPECIAL_CHARS["continue"])
+                self.handle_receiving(conn)
+        except ConnectionAbortedError or ConnectionResetError:
+            del self.clients[conn]
 
     def auth(self, conn):
-        key = self.clients[conn]
-        conn.send(SPECIAL_CHARS["continue"])
-        username, password = AesUtil.decrypt_login(conn.recv(2056), key)
-        data = requests.post('http://127.0.0.1:8000/rest-auth/login/',
-                             data={"username": username, "password": password})
-        if "key" in data.json():
-            data = requests.get('http://127.0.0.1:8000/users/').json()
-            for user in data:
-                if user["username"] == username:
-                    conn.send(dumps(user["groups"]))
-        else:
-            conn.send(dumps(False))
+        try:
+            key = self.clients[conn]
+            conn.send(SPECIAL_CHARS["continue"])
+            username, password = AesUtil.decrypt_login(conn.recv(2056), key)
+            data = requests.post('http://127.0.0.1:8000/rest-auth/login/',
+                                 data={"username": username, "password": password})
+            if "key" in data.json():
+                data = requests.get('http://127.0.0.1:8000/users/').json()
+                for user in data:
+                    if user["username"] == username:
+                        conn.send(dumps(user["groups"]))
+            else:
+                conn.send(dumps(False))
+        except ConnectionAbortedError or ConnectionResetError:
+            del self.clients[conn]
 
 
 if __name__ == "__main__":

@@ -43,7 +43,6 @@ class AesUtil(object):
         pad_string = PAD * to_pad_len
         return b''.join([new_data, pad_string])
 
-
     @staticmethod
     def encrypt_file(path, key, new_path=None):
         # generate a new path

@@ -107,13 +107,47 @@ class LoginDialog(wx.Dialog):
             self.Destroy()
 
 
+class RetrievePanel(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent=parent)
+
+        lbl = wx.StaticText(self, label="Available files:")
+        self.fileTextCtrl = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.HSCROLL | wx.TE_READONLY)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(lbl, 0, wx.ALL, 5)
+        sizer.Add(self.fileTextCtrl, 1, wx.EXPAND | wx.ALL, 5)
+
+        self.retrieveTextCtrl = wx.TextCtrl(self)
+        sizer.Add(self.retrieveTextCtrl, 1, wx.EXPAND | wx.ALL, 5)
+
+        btn_refresh = wx.Button(self, label="refresh")
+        btn_refresh.Bind(wx.EVT_BUTTON, self.refresh)
+        sizer.Add(btn_refresh, 0, wx.ALL | wx.BOTTOM | wx.LEFT, 5)
+
+        btn_refresh = wx.Button(self, label="get")
+        btn_refresh.Bind(wx.EVT_BUTTON, self.retrieve_files)
+        sizer.Add(btn_refresh, 0, wx.ALL | wx.BOTTOM | wx.RIGHT, 5)
+
+        self.SetSizer(sizer)
+
+    def retrieve_files(self, event=None):
+        print(self.retrieveTextCtrl.GetLineText(1))
+
+    def refresh(self, event=None):
+        global CLIENT
+        self.fileTextCtrl.Clear()
+        file_name_list = CLIENT.get_file_list()
+        for file_name in file_name_list:
+            self.fileTextCtrl.AppendText(file_name+"\n")
+
+
 class Window(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, "DropDrive")
         # def panels
         self.dnd_panel = DnDPanel(self)
-        #self.login_panel = LoginPanel(self)
-        #self.dnd_panel.Hide()
+        self.retrieve_panel = RetrievePanel(self)
+        self.retrieve_panel.Hide()
 
         # menu init
         self.menu_init()
@@ -121,7 +155,7 @@ class Window(wx.Frame):
         # sizer
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.dnd_panel, 1, wx.EXPAND)
-        #self.sizer.Add(self.login_panel, 1, wx.EXPAND)
+        self.sizer.Add(self.retrieve_panel, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
         self.Show()
         login = LoginDialog()
@@ -134,7 +168,7 @@ class Window(wx.Frame):
         # wx.ID_ABOUT and wx.ID_EXIT are standard ids provided by wxWidgets.
         menu_about = file_menu.Append(wx.ID_ABOUT, "&About", " Information about this program")
         menu_exit = file_menu.Append(wx.ID_EXIT, "E&xit", " Terminate the program")
-        #switch_panels_menu_item = file_menu.Append(wx.ID_ANY, "Switch Panels", "Login to FTP")
+        switch_panels_menu_item = file_menu.Append(wx.ID_ANY, "Switch Panels", "Login to FTP")
 
         # Creating the menubar.
         menu_bar = wx.MenuBar()
@@ -144,19 +178,20 @@ class Window(wx.Frame):
         # Set events.
         self.Bind(wx.EVT_MENU, self.on_about, menu_about)
         self.Bind(wx.EVT_MENU, self.on_exit, menu_exit)
-        #self.Bind(wx.EVT_MENU, self.on_switch_panels, switch_panels_menu_item)
+        self.Bind(wx.EVT_MENU, self.on_switch_panels, switch_panels_menu_item)
 
-    #def on_switch_panels(self, event):
-    #    # switch panels (login/ftp)
-    #    if self.dnd_panel.IsShown():
-    #        self.SetTitle("Panel Two Showing")
-    #        self.dnd_panel.Hide()
-    #        self.login_panel.Show()
-    #    else:
-    #        self.SetTitle("Panel One Showing")
-    #        self.dnd_panel.Show()
-    #        self.login_panel.Hide()
-    #    self.Layout()
+    def on_switch_panels(self, event):
+        # switch panels (login/ftp)
+        if self.dnd_panel.IsShown():
+            self.SetTitle("Panel Two Showing")
+            self.dnd_panel.Hide()
+            self.retrieve_panel.refresh()
+            self.retrieve_panel.Show()
+        else:
+            self.SetTitle("Panel One Showing")
+            self.dnd_panel.Show()
+            self.retrieve_panel.Hide()
+        self.Layout()
 
     def on_about(self, e):
         # A message dialog box with an OK button.
