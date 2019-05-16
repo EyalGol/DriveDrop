@@ -22,6 +22,7 @@ class Client:
         self.diffie = DiffieUtil()
         self.key = self.diffie.recv(self.socket)
         self.diffie.send(self.socket, self.public_key)
+        self.groups = None
 
     def send_file(self, path, last=True):
         file_name = os.path.split(path)[-1].encode("utf8")
@@ -48,3 +49,9 @@ class Client:
 
     def login(self, username, password):
         self.socket.send(SPECIAL_CHARS["authenticate"])
+        self.socket.recv(128)
+        self.socket.send(AesUtil.encrypt_login(username, password, self.key))
+        groups = loads(self.socket.recv(2056))
+        if groups:
+            self.groups = groups
+        return groups

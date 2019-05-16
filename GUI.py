@@ -14,8 +14,8 @@ class MyFileDropTarget(wx.FileDropTarget):
 
     def OnDropFiles(self, x, y, file_names):
         """
-                  When files are dropped, write where they were dropped and then the file paths themselves
-                  """
+        When files are dropped, write where they were dropped and then the file paths themselves
+        """
         self.window.SetInsertionPointEnd()
         self.window.updateText("\n{} file(s) dropped at ({},{})\n".format(len(file_names), x, y))
         for file_path in file_names:
@@ -48,21 +48,21 @@ class DnDPanel(wx.Panel):
 
     def SetInsertionPointEnd(self):
         """
-                 Put insertion point at end of text control to prevent overwriting
-                 """
+        Put insertion point at end of text control to prevent overwriting
+        """
         self.fileTextCtrl.SetInsertionPointEnd()
 
     def updateText(self, text):
         """
-                 Write text to the text control
-                 """
+        Write text to the text control
+        """
         self.fileTextCtrl.WriteText(text)
 
 
 class LoginDialog(wx.Dialog):
     """
-        Class to define login dialog
-        """
+    Class to define login dialog
+    """
     def __init__(self):
         wx.Dialog.__init__(self, None, title="Login")
 
@@ -98,10 +98,11 @@ class LoginDialog(wx.Dialog):
                    """
         global CLIENT
         CLIENT = Client()
-        stupid_password = "pas1234"
-        user_name = self.user.GetValue()
-        user_password = self.password.GetValue()
-        if user_password == stupid_password:
+        username = self.user.GetValue()
+        password = self.password.GetValue()
+        groups = CLIENT.login(username, password)
+        print(groups)
+        if groups:
             self.Destroy()
 
 
@@ -161,7 +162,7 @@ class Window(wx.Frame):
         dlg = wx.MessageDialog(self, "This is DriveDrop its like google drive but worse", "About DriveDrop")
         dlg.ShowModal()
         dlg.Destroy()
-#
+
     def on_exit(self, e):
         self.Close(True)
 

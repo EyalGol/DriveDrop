@@ -96,15 +96,19 @@ class Server:
             conn.send(SPECIAL_CHARS["continue"])
             self.handle_receiving(conn)
 
-    def auth(self, username, password):
+    def auth(self, conn):
+        key = self.clients[conn]
+        conn.send(SPECIAL_CHARS["continue"])
+        username, password = AesUtil.decrypt_login(conn.recv(2056), key)
         data = requests.post('http://127.0.0.1:8000/rest-auth/login/',
                              data={"username": username, "password": password})
         if "key" in data.json():
             data = requests.get('http://127.0.0.1:8000/users/').json()
             for user in data:
                 if user["username"] == username:
-                    return user["groups"]
-        return False
+                    conn.send(dumps(user["groups"]))
+        else:
+            conn.send(dumps(False))
 
 
 if __name__ == "__main__":
