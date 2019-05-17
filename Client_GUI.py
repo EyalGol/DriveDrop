@@ -262,7 +262,7 @@ class SendDialog(wx.Dialog):
 
     def handle_send_file_browser(self, event):
         path = self.send_browser.GetPath()
-        while not path or os.path.isfile(path):
+        while not path or not os.path.isfile(path):
             wx.MessageBox("Please choose a valid path")
             path = self.send_browser.GetPath()
         wx.MessageBox(CLIENT.send_file(path, True))
