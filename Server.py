@@ -24,8 +24,13 @@ class Server:
         self.socket.bind(ADDRESS)
         self.socket.listen(MAX_USERS)
         self.clients = {}
-        self.client_connection_handling_thread = threading.Thread(target=self.handle_new_connection).start()
-        self.client_handling_thread = threading.Thread(target=self.handle_connections).start()
+        self.listening_thread = self.client_connection_handling_thread = threading.Thread(
+            target=self.handle_new_connection)
+        self.listening_thread.daemon = True
+        self.listening_thread.start()
+        self.client_handling_thread = threading.Thread(target=self.handle_connections)
+        self.client_handling_thread.daemon = True
+        self.client_handling_thread.start()
 
     def handle_new_connection(self):
         print("handling new connections")
@@ -38,9 +43,7 @@ class Server:
                 diffie = DiffieUtil()
                 diffie.send(conn)
                 key = diffie.recv(conn, RSA.private_key)
-                print(key)
                 self.clients[conn] = key
-                print(conn, "has connected")
         except ConnectionError:
             del self.clients[conn]
 
@@ -85,7 +88,6 @@ class Server:
             conn.send(SPECIAL_CHARS["continue"])
             path = os.path.join(".", "tmp", "(senc){}".format(file_name))
             with open(path, "wb") as f:
-                print("receiving...")
                 while True:
                     data = conn.recv(2056)
                     if data == SPECIAL_CHARS["interrupt"]:
@@ -95,7 +97,6 @@ class Server:
                         f.write(data)
                         break
                     f.write(data)
-            print("done...")
             conn.send(SPECIAL_CHARS["continue"])
             data = conn.recv(128)
             dest_path = os.path.join(".", "file_db", "{}".format(os.path.split(path)[-1][6:]))
@@ -153,14 +154,10 @@ class Server:
         iv, file_name = loads(conn.recv(2056))
         file_name = AesUtil.decrypt_plaintext(file_name, key, iv)
         try:
-            print(file_name)
             path = os.path.join(".", "file_db", file_name)
-            print(path)
             path = AesUtil.encrypt_file(path, key)
-            print(path)
             conn.send(SPECIAL_CHARS["continue"])
             with open(path, 'rb') as f:
-                print("sending file...")
                 data = f.read(2056)
                 while data:
                     conn.send(data)

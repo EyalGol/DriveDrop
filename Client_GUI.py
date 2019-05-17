@@ -14,6 +14,7 @@ class MainFrame(wx.Frame):
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW))
+        self.SetIcon(wx.Icon(os.path.join(".", "icon.png")))
 
         frame_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -30,7 +31,7 @@ class MainFrame(wx.Frame):
         self.send_file_text = wx.TextCtrl(self.send_panel, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition,
                                           wx.DefaultSize, wx.TE_MULTILINE | wx.TE_READONLY)
         self.send_file_text.SetDropTarget(MyFileDropTarget(self.send_file_text))
-        send_sizer.Add(self.send_file_text, 1, wx.ALL | wx.EXPAND, 5)
+        send_sizer.Add(self.send_file_text, 1, wx.ALL | wx.EXPAND, 25)
 
         self.send_panel.SetSizer(send_sizer)
         self.send_panel.Layout()
@@ -45,7 +46,7 @@ class MainFrame(wx.Frame):
         topbar_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.recv_button = wx.Button(self.receive_panel, wx.ID_ANY, u"Refresh", wx.DefaultPosition, wx.DefaultSize, 0)
-        topbar_sizer.Add(self.recv_button, 0, wx.ALL, 5)
+        topbar_sizer.Add(self.recv_button, 0, wx.ALL, 25)
 
         self.recv_title = wx.StaticText(self.receive_panel, wx.ID_ANY, u"File(s) Available To Download",
                                         wx.DefaultPosition, wx.DefaultSize, 0)
@@ -57,7 +58,7 @@ class MainFrame(wx.Frame):
         file_name_list_choices = []
         self.file_name_list = wx.ListBox(self.receive_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
                                          file_name_list_choices, wx.LB_NEEDED_SB | wx.LB_SINGLE)
-        receive_sizer.Add(self.file_name_list, 1, wx.ALL | wx.EXPAND, 25)
+        receive_sizer.Add(self.file_name_list, 1, wx.RIGHT | wx.BOTTOM | wx.LEFT | wx.EXPAND, 25)
 
         self.receive_panel.SetSizer(receive_sizer)
         self.receive_panel.Layout()
