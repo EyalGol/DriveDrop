@@ -28,6 +28,7 @@ class MainFrame(wx.Frame):
 
         self.send_file_text = wx.TextCtrl(self.send_panel, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition,
                                           wx.DefaultSize, wx.TE_MULTILINE | wx.TE_READONLY)
+        self.send_file_text.SetDropTarget(MyFileDropTarget(self.send_file_text))
         send_sizer.Add(self.send_file_text, 1, wx.ALL | wx.EXPAND, 5)
 
         self.send_panel.SetSizer(send_sizer)
@@ -52,10 +53,10 @@ class MainFrame(wx.Frame):
 
         recieve_sizer.Add(bSizer5, 0, wx.EXPAND, 5)
 
-        file_name_listChoices = []
+        file_name_list_choices = []
         self.file_name_list = wx.ListBox(self.receive_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
-                                         file_name_listChoices, wx.LB_NEEDED_SB | wx.LB_SINGLE)
-        recieve_sizer.Add(self.file_name_list, 1, wx.ALL | wx.EXPAND, 5)
+                                         file_name_list_choices, wx.LB_NEEDED_SB | wx.LB_SINGLE)
+        recieve_sizer.Add(self.file_name_list, 1, wx.ALL | wx.EXPAND, 25)
 
         self.receive_panel.SetSizer(recieve_sizer)
         self.receive_panel.Layout()
@@ -100,22 +101,29 @@ class MainFrame(wx.Frame):
         self.file_name_list.Bind(wx.EVT_LISTBOX_DCLICK, self.recv_file)
         self.Bind(wx.EVT_MENU, self.handle_panel_switch, id=self.switch_panels.GetId())
         self.Bind(wx.EVT_MENU, self.handle_exit, id=self.exit_menu.GetId())
-        self.Bind(wx.EVT_MENU, self.handle_send_browes, id=self.send_menu_item.GetId())
-        self.Bind(wx.EVT_MENU, self.handle_recv_browes, id=self.recv_menu_item.GetId())
+        self.Bind(wx.EVT_MENU, self.handle_send_browse, id=self.send_menu_item.GetId())
+        self.Bind(wx.EVT_MENU, self.handle_recv_browse, id=self.recv_menu_item.GetId())
 
     def __del__(self):
         pass
 
     # Virtual event handlers, overide them in your derived class
-    def refresh(self, event):
-        event.Skip()
+    def refresh(self, event=None):
+        file_names = CLIENT.get_file_list()
+        self.file_name_list.Clear()
+        for file_name in file_names:
+            self.file_name_list.Insert(file_name, 0)
+        self.Layout()
 
     def recv_file(self, event):
-        event.Skip()
+        filename = event.GetString()
+        if filename:
+            wx.MessageBox(CLIENT.recv_files(filename))
 
     def handle_panel_switch(self, event):
         if self.send_panel.IsShown():
             self.send_panel.Hide()
+            self.refresh()
             self.receive_panel.Show()
         else:
             self.receive_panel.Hide()
@@ -125,11 +133,36 @@ class MainFrame(wx.Frame):
     def handle_exit(self, event):
         self.Close(True)
 
-    def handle_send_browes(self, event):
+    def handle_send_browse(self, event):
         SendDialog(self).ShowModal()
 
-    def handle_recv_browes(self, event):
+    def handle_recv_browse(self, event):
         RecvDialog(self).ShowModal()
+
+
+class MyFileDropTarget(wx.FileDropTarget):
+    def __init__(self, textCtrl):
+        wx.FileDropTarget.__init__(self)
+        self.textCtrl = textCtrl
+
+    def OnDropFiles(self, x, y, file_names):
+        """
+        When files are dropped, write where they were dropped and then the file paths themselves
+        """
+        self.textCtrl.AppendText("\n{} file(s) dropped. Sending...\n".format(len(file_names)))
+        text = ""
+        for file_path in file_names:
+            try:
+                self.textCtrl.AppendText(file_path + '\n')
+                print(file_path)
+                if file_path == file_names[-1]:
+                    text = CLIENT.send_file(file_path, True)
+                else:
+                    text = CLIENT.send_file(file_path, False)
+            except Exception as err:
+                print(str(err))
+        self.textCtrl.AppendText("\n"+text+"\n")
+        return True
 
 
 class RecvDialog(wx.Dialog):
@@ -144,19 +177,19 @@ class RecvDialog(wx.Dialog):
 
         recv_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        recv_choiceChoices = CLIENT.get_file_list()
-        self.recv_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, recv_choiceChoices, 0)
+        recv_choice_choices = CLIENT.get_file_list()
+        self.recv_choice = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, recv_choice_choices, 0)
         self.recv_choice.SetSelection(0)
         recv_sizer.Add(self.recv_choice, 0, wx.ALL | wx.EXPAND, 15)
 
-        recv_browser_burrons = wx.StdDialogButtonSizer()
-        self.recv_browser_burronsOK = wx.Button(self, wx.ID_OK)
-        recv_browser_burrons.AddButton(self.recv_browser_burronsOK)
-        self.recv_browser_burronsCancel = wx.Button(self, wx.ID_CANCEL)
-        recv_browser_burrons.AddButton(self.recv_browser_burronsCancel)
-        recv_browser_burrons.Realize()
+        recv_browser_buttons = wx.StdDialogButtonSizer()
+        self.recv_browser_buttons_ok = wx.Button(self, wx.ID_OK)
+        recv_browser_buttons.AddButton(self.recv_browser_buttons_ok)
+        self.recv_browser_buttons_cancel = wx.Button(self, wx.ID_CANCEL)
+        recv_browser_buttons.AddButton(self.recv_browser_buttons_cancel)
+        recv_browser_buttons.Realize()
 
-        recv_sizer.Add(recv_browser_burrons, 1, wx.ALIGN_CENTER, 5)
+        recv_sizer.Add(recv_browser_buttons, 1, wx.ALIGN_CENTER, 5)
 
         _recv_sizer.Add(recv_sizer, 1, wx.EXPAND, 5)
 
@@ -166,24 +199,20 @@ class RecvDialog(wx.Dialog):
         self.Centre(wx.BOTH)
 
         # Connect Events
-        self.recv_browser_burronsCancel.Bind(wx.EVT_BUTTON, self.kill_recv_dialog)
-        self.recv_browser_burronsOK.Bind(wx.EVT_BUTTON, self.handle_recv_file_browser)
+        self.recv_browser_buttons_cancel.Bind(wx.EVT_BUTTON, self.kill_recv_dialog)
+        self.recv_browser_buttons_ok.Bind(wx.EVT_BUTTON, self.handle_recv_file_browser)
 
     def __del__(self):
         pass
 
-    # Virtual event handlers, overide them in your derived class
+    # Virtual event handlers, override them in your derived class
     def kill_recv_dialog(self, event):
         self.Destroy()
 
     def handle_recv_file_browser(self, event):
-        file_name = event.GetString()
-        print("filename", file_name)
-        print("selection:", event.GetSelection())
-        print("data", event.GetClientData())
-        print("long", event.GetExtraLong())
-        #wx.MessageBox(CLIENT.recv_files(file_name))
-        #self.Destroy()
+        file_name = self.recv_choice.GetStringSelection()
+        wx.MessageBox(CLIENT.recv_files(file_name))
+        self.Destroy()
 
 
 class SendDialog(wx.Dialog):
@@ -198,18 +227,18 @@ class SendDialog(wx.Dialog):
 
         send_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.send_browser = wx.DirPickerCtrl(self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition,
-                                             wx.DefaultSize, wx.DIRP_DEFAULT_STYLE | wx.DIRP_DIR_MUST_EXIST)
+        self.send_browser = wx.FilePickerCtrl(self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition,
+                                             wx.DefaultSize, wx.FLP_DEFAULT_STYLE | wx.FLP_FILE_MUST_EXIST)
         send_sizer.Add(self.send_browser, 0, wx.ALL | wx.EXPAND, 10)
 
-        send_browser_burrons = wx.StdDialogButtonSizer()
-        self.send_browser_burronsOK = wx.Button(self, wx.ID_OK)
-        send_browser_burrons.AddButton(self.send_browser_burronsOK)
-        self.send_browser_burronsCancel = wx.Button(self, wx.ID_CANCEL)
-        send_browser_burrons.AddButton(self.send_browser_burronsCancel)
-        send_browser_burrons.Realize();
+        send_browser_buttons = wx.StdDialogButtonSizer()
+        self.send_browser_buttons_ok = wx.Button(self, wx.ID_OK)
+        send_browser_buttons.AddButton(self.send_browser_buttons_ok)
+        self.send_browser_buttons_cancel = wx.Button(self, wx.ID_CANCEL)
+        send_browser_buttons.AddButton(self.send_browser_buttons_cancel)
+        send_browser_buttons.Realize()
 
-        send_sizer.Add(send_browser_burrons, 1, wx.ALIGN_CENTER, 5)
+        send_sizer.Add(send_browser_buttons, 1, wx.ALIGN_CENTER, 5)
 
         _send_sizer.Add(send_sizer, 1, wx.EXPAND, 5)
 
@@ -219,18 +248,23 @@ class SendDialog(wx.Dialog):
         self.Centre(wx.BOTH)
 
         # Connect Events
-        self.send_browser_burronsCancel.Bind(wx.EVT_BUTTON, self.kill_send_dialog)
-        self.send_browser_burronsOK.Bind(wx.EVT_BUTTON, self.handle_send_file_browser)
+        self.send_browser_buttons_cancel.Bind(wx.EVT_BUTTON, self.kill_send_dialog)
+        self.send_browser_buttons_ok.Bind(wx.EVT_BUTTON, self.handle_send_file_browser)
 
     def __del__(self):
         pass
 
-    # Virtual event handlers, overide them in your derived class
+    # Virtual event handlers, override them in your derived class
     def kill_send_dialog(self, event):
-        event.Skip()
+        self.Destroy()
 
     def handle_send_file_browser(self, event):
-        event.Skip()
+        path = self.send_browser.GetPath()
+        while not path or os.path.isfile(path):
+            wx.MessageBox("Please choose a valid path")
+            path = self.send_browser.GetPath()
+        wx.MessageBox(CLIENT.send_file(path, True))
+        self.Destroy()
 
 
 class LoginDialog(wx.Dialog):
@@ -278,7 +312,7 @@ class LoginDialog(wx.Dialog):
         login_button_sizer = wx.StdDialogButtonSizer()
         self.login_button_sizerOK = wx.Button(self, wx.ID_OK)
         login_button_sizer.AddButton(self.login_button_sizerOK)
-        login_button_sizer.Realize();
+        login_button_sizer.Realize()
 
         _login_sizer.Add(login_button_sizer, 5, wx.ALIGN_CENTER, 5)
 
