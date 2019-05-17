@@ -77,7 +77,8 @@ class Client:
             groups = loads(self.socket.recv(2056))
             if groups:
                 self.groups = groups
-            return groups
+                return True
+            return False
         except ConnectionError:
             self.socket.close()
             self.init_connection()

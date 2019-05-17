@@ -39,28 +39,28 @@ class MainFrame(wx.Frame):
         self.receive_panel = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
         self.receive_panel.Hide()
 
-        recieve_sizer = wx.BoxSizer(wx.VERTICAL)
+        receive_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
+        topbar_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.recv_button = wx.Button(self.receive_panel, wx.ID_ANY, u"Refresh", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer5.Add(self.recv_button, 0, wx.ALL, 5)
+        topbar_sizer.Add(self.recv_button, 0, wx.ALL, 5)
 
         self.recv_title = wx.StaticText(self.receive_panel, wx.ID_ANY, u"File(s) Available To Download",
                                         wx.DefaultPosition, wx.DefaultSize, 0)
         self.recv_title.Wrap(-1)
-        bSizer5.Add(self.recv_title, 0, wx.ALIGN_CENTER | wx.LEFT, 100)
+        topbar_sizer.Add(self.recv_title, 0, wx.ALIGN_CENTER | wx.LEFT, 100)
 
-        recieve_sizer.Add(bSizer5, 0, wx.EXPAND, 5)
+        receive_sizer.Add(topbar_sizer, 0, wx.EXPAND, 5)
 
         file_name_list_choices = []
         self.file_name_list = wx.ListBox(self.receive_panel, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
                                          file_name_list_choices, wx.LB_NEEDED_SB | wx.LB_SINGLE)
-        recieve_sizer.Add(self.file_name_list, 1, wx.ALL | wx.EXPAND, 25)
+        receive_sizer.Add(self.file_name_list, 1, wx.ALL | wx.EXPAND, 25)
 
-        self.receive_panel.SetSizer(recieve_sizer)
+        self.receive_panel.SetSizer(receive_sizer)
         self.receive_panel.Layout()
-        recieve_sizer.Fit(self.receive_panel)
+        receive_sizer.Fit(self.receive_panel)
         main_sizer.Add(self.receive_panel, 1, wx.EXPAND | wx.ALL, 5)
 
         frame_sizer.Add(main_sizer, 1, wx.EXPAND, 0)
@@ -339,8 +339,8 @@ class LoginDialog(wx.Dialog):
             self.login_status.Show()
             self.Layout()
         else:
-            groups = CLIENT.login(username, password)
-            if groups:
+            authenticated = CLIENT.login(username, password)
+            if authenticated:
                 self.Destroy()
             else:
                 self.login_status.SetLabelText("Wrong Credentials try again")
