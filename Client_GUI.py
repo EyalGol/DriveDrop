@@ -22,7 +22,7 @@ class MainFrame(wx.Frame):
         self.send_panel = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL)
         send_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.send_title = wx.StaticText(self.send_panel, wx.ID_ANY, u"Drug And Drop To Send File(s)",
+        self.send_title = wx.StaticText(self.send_panel, wx.ID_ANY, u"Drag And Drop To Send File(s)",
                                         wx.DefaultPosition, wx.DefaultSize, 0)
         self.send_title.Wrap(-1)
         send_sizer.Add(self.send_title, 0, wx.ALIGN_CENTER | wx.ALL, 5)
