@@ -146,7 +146,7 @@ class RetrievePanel(wx.Panel):
         for file_name in file_name_list:
             self.fileTextCtrl.AppendText(file_name+"\n")
 
-
+# login done in new gui
 class Window(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, "DropDrive")
