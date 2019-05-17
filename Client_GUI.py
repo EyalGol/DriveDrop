@@ -223,14 +223,14 @@ class SendDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=wx.EmptyString, pos=wx.DefaultPosition,
                            size=wx.Size(585, 183), style=wx.DEFAULT_DIALOG_STYLE)
 
-        self.SetSizeHintsSz(wx.DefaultSize, wx.DefaultSize)
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
         _send_sizer = wx.BoxSizer(wx.VERTICAL)
 
         send_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.send_browser = wx.FilePickerCtrl(self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition,
-                                              wx.DefaultSize, wx.FLP_DEFAULT_STYLE | wx.FLP_FILE_MUST_EXIST)
+        self.send_browser = wx.FilePickerCtrl(self, id=wx.ID_ANY, message=u"Select a folder", pos=wx.DefaultPosition,
+                                              size=wx.DefaultSize, style=wx.FLP_DEFAULT_STYLE | wx.FLP_FILE_MUST_EXIST)
         send_sizer.Add(self.send_browser, 0, wx.ALL | wx.EXPAND, 10)
 
         send_browser_buttons = wx.StdDialogButtonSizer()
