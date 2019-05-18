@@ -1,11 +1,15 @@
 # DriveDrop
-## a cloud file sharing application with P2P encryption
+## a cloud file sharing cross-platform application with P2P encryption
 ### modules used:
 - wxPython
 - pyCryptoDome
 - django
 - djangorestframework
 - django-rest-auth
+- requests
+- json
+- pickel and cPickle
+- os
 
 ### networking: 
 - socket programming
