@@ -16,6 +16,8 @@ MAX_USERS = 30
 RSA = RsaUtil()
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
                  "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/"}
+SHARED_FILES = os.path.join(".", "file_db")
+TMP_PATH = os.path.join(".", "tmp")
 
 
 class Server:
@@ -86,7 +88,7 @@ class Server:
             iv, file_name = loads(conn.recv(2056))
             file_name = AesUtil.decrypt_plaintext(file_name, key, iv)
             conn.send(SPECIAL_CHARS["continue"])
-            path = os.path.join(".", "tmp", "(senc){}".format(file_name))
+            path = os.path.join(SHARED_FILES, (senc){}".format(file_name))
             with open(path, "wb") as f:
                 while True:
                     data = conn.recv(2056)
@@ -99,7 +101,7 @@ class Server:
                     f.write(data)
             conn.send(SPECIAL_CHARS["continue"])
             data = conn.recv(128)
-            dest_path = os.path.join(".", "file_db", "{}".format(os.path.split(path)[-1][6:]))
+            dest_path = os.path.join(SHARED_FILES, "{}".format(os.path.split(path)[-1][6:]))
             AesUtil.decrypt_file(path, key, dest_path)
             os.remove(path)
             if data == SPECIAL_CHARS["continue"]:
@@ -133,7 +135,7 @@ class Server:
 
     def list_files(self, conn):
         key = self.clients[conn]
-        file_list = os.listdir(os.path.join(".", "file_db"))
+        file_list = os.listdir(os.path.join(SHARED_FILES))
         enc_file_list = []
         iv = b''
         if file_list:
@@ -154,7 +156,7 @@ class Server:
         iv, file_name = loads(conn.recv(2056))
         file_name = AesUtil.decrypt_plaintext(file_name, key, iv)
         try:
-            path = os.path.join(".", "file_db", file_name)
+            path = os.path.join(SHARED_FILES, file_name)
             path = AesUtil.encrypt_file(path, key)
             conn.send(SPECIAL_CHARS["continue"])
             with open(path, 'rb') as f:
