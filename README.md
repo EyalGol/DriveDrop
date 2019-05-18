@@ -21,7 +21,7 @@
 ### Authentication:
 - django-rest-auth
 
-## Installetion
+## Installation
 - pip or easy install the modules mentioned above
 - deploy or run the developing django server (python manage.py runserver)
 - Change the pathes as needed and create the coresponding folders (Encryption.py, Server.py, Client.py)
