@@ -5,9 +5,12 @@ from Encryption import *
 from Crypto.PublicKey import RSA
 import os
 import json
+from time import sleep
+import sys
 
 IP = "localhost"
 PORT = 6667
+WAIT_INTERVAL = 1
 ADDRESS = (IP, PORT)
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
                  "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/"}
@@ -32,7 +35,14 @@ class Client:
             self.diffie = DiffieUtil()
             self.key = self.diffie.recv(self.socket)
             self.diffie.send(self.socket, self.public_key)
-        except ConnectionError:
+        except ConnectionError or socket.error:
+            global WAIT_INTERVAL
+            if WAIT_INTERVAL > 20:
+                print("can't connect to the server exiting")
+                sys.exit()
+            print("waiting {} then trying to reconnect to server".format(WAIT_INTERVAL))
+            sleep(WAIT_INTERVAL)
+            WAIT_INTERVAL *= 2
             self.init_connection()
 
     def send_file(self, path, last=True):
@@ -61,7 +71,7 @@ class Client:
                 self.socket.recv(128)
             os.remove(path)
             return "Success"
-        except ConnectionError:
+        except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()
             return "Failed"
@@ -79,7 +89,7 @@ class Client:
                 self.groups = groups
                 return True
             return False
-        except ConnectionError:
+        except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()
         except Exception as err:
@@ -100,7 +110,7 @@ class Client:
                     dec_list.append(AesUtil.decrypt_plaintext(file, self.key, iv))
                 return dec_list
             return ["No files found"]
-        except ConnectionError:
+        except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()
             return "Failed"
@@ -138,7 +148,7 @@ class Client:
             AesUtil.decrypt_file(path, key, dest_path)
             os.remove(path)
             return "Success"
-        except ConnectionError:
+        except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()
             return "Failed"

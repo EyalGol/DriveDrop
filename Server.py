@@ -44,7 +44,7 @@ class Server:
                 diffie.send(conn)
                 key = diffie.recv(conn, RSA.private_key)
                 self.clients[conn] = key
-        except ConnectionError:
+        except ConnectionError or socket.error:
             del self.clients[conn]
 
     def handle_connections(self):
@@ -105,7 +105,7 @@ class Server:
             if data == SPECIAL_CHARS["continue"]:
                 conn.send(SPECIAL_CHARS["continue"])
                 self.handle_receiving(conn)
-        except ConnectionError or TypeError:
+        except ConnectionError or TypeError or socket.error:
             del self.clients[conn]
 
     def auth(self, conn):
@@ -128,7 +128,7 @@ class Server:
                             conn.send(dumps(user_groups))
                 else:
                     conn.send(dumps(False))
-        except ConnectionError or TypeError:
+        except ConnectionError or TypeError or socket.error:
             del self.clients[conn]
 
     def list_files(self, conn):
@@ -164,7 +164,7 @@ class Server:
                     data = f.read(2056)
             conn.send(SPECIAL_CHARS["interrupt"])
             os.remove(path)
-        except ConnectionError or TypeError:
+        except ConnectionError or TypeError or socket.error:
             del self.clients[conn]
         except FileNotFoundError:
             conn.send(b"The Requested file doesn't exist")
