@@ -15,6 +15,7 @@ BLOCK_SIZE = 16
 FILE_CHUNK = 1024 * 16
 INTERRUPT = b'\u0101'
 PAD = b'0'
+TMP_PATH = os.path.join(".", "tmp")
 
 
 class AesUtil(object):
@@ -47,7 +48,7 @@ class AesUtil(object):
     def encrypt_file(path, key, new_path=None):
         # generate a new path
         if not new_path:
-            new_path = os.path.join(".", "tmp", "(enc){}".format(os.path.split(path)[-1]))
+            new_path = os.path.join(TMP_PATH, "(enc){}".format(os.path.split(path)[-1]))
         while os.path.exists(new_path):  # if path already elitist try put copy behind it
             copy_path = list(os.path.split(new_path))
             copy_path[-1] = "(copy)" + copy_path[-1]
@@ -73,7 +74,7 @@ class AesUtil(object):
     def decrypt_file(path, key, new_path=None):
         # generate a new path
         if not new_path:
-            new_path = os.path.join(".", "tmp", "(dec){}".format(os.path.split(path)[-1][5:]))
+            new_path = os.path.join(TMP_PATH, "(dec){}".format(os.path.split(path)[-1][5:]))
         while os.path.exists(new_path):  # if path already elitist try put copy behind it
             copy_path = list(os.path.split(new_path))
             copy_path[-1] = "(copy)"+copy_path[-1]

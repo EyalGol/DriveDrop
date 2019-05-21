@@ -14,6 +14,8 @@ WAIT_INTERVAL = 1
 ADDRESS = (IP, PORT)
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
                  "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/"}
+TMP_PATH = os.path.join(".", "tmp")
+RECIEVED_FILES = os.path.join(".", "recv_files")
 
 
 class Client:
@@ -131,7 +133,7 @@ class Client:
             data = conn.recv(128)
             if data != SPECIAL_CHARS["continue"]:
                 return data.decode()
-            path = os.path.join(".", "tmp", "(cenc){}".format(file_name))
+            path = os.path.join(TMP_PATH, "(cenc){}".format(file_name))
             with open(path, "wb") as f:
                 print("receiving...")
                 while True:
@@ -144,7 +146,7 @@ class Client:
                         break
                     f.write(data)
             print("done...")
-            dest_path = os.path.join(".", "recv_files", file_name)
+            dest_path = os.path.join(RECIEVED_FILES, file_name)
             AesUtil.decrypt_file(path, key, dest_path)
             os.remove(path)
             return "Success"
