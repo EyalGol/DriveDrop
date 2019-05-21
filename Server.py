@@ -64,16 +64,19 @@ class Server:
                 self.handle_errors(conn)
 
     def handle_receiving(self, conn):
-        # receiving a code (what operation to do)
-        data = conn.recv(128)
-        if SPECIAL_CHARS["recv_file_command"] == data:  # recv file transfer
-            self.recv_files(conn)
-        elif SPECIAL_CHARS["authenticate"] == data:  # authentication request
-            self.auth(conn)
-        elif SPECIAL_CHARS["list_files"] == data:  # lists available files
-            self.list_files(conn)
-        elif SPECIAL_CHARS["send_file"] == data:  # send files to the client
-            self.send_file(conn)
+        try:
+            # receiving a code (what operation to do)
+            data = conn.recv(128)
+            if SPECIAL_CHARS["recv_file_command"] == data:  # recv file transfer
+                self.recv_files(conn)
+            elif SPECIAL_CHARS["authenticate"] == data:  # authentication request
+                self.auth(conn)
+            elif SPECIAL_CHARS["list_files"] == data:  # lists available files
+                self.list_files(conn)
+            elif SPECIAL_CHARS["send_file"] == data:  # send files to the client
+                self.send_file(conn)
+        except ConnectionError or TypeError or socket.error:
+            conn.send(dumps(False))
 
     def handle_sending(self, conn):
         pass
@@ -88,7 +91,7 @@ class Server:
             iv, file_name = loads(conn.recv(2056))
             file_name = AesUtil.decrypt_plaintext(file_name, key, iv)
             conn.send(SPECIAL_CHARS["continue"])
-            path = os.path.join(SHARED_FILES, (senc){}".format(file_name))
+            path = os.path.join(SHARED_FILES, "(senc){}".format(file_name))
             with open(path, "wb") as f:
                 while True:
                     data = conn.recv(2056)
