@@ -101,7 +101,7 @@ class Client:
     def get_file_list(self):
         try:
             if "view" not in self.groups:
-                return ["INEFFICIENT PERMISSIONS"]
+                return ["INEFFICIENT PERMISSIONS",]
             self.socket.send(SPECIAL_CHARS["list_files"])
             iv = self.socket.recv(128)
             if SPECIAL_CHARS["interrupt"] not in iv:
@@ -111,7 +111,7 @@ class Client:
                 for file in enc_list:
                     dec_list.append(AesUtil.decrypt_plaintext(file, self.key, iv))
                 return dec_list
-            return ["No files found"]
+            return ["No files found",]
         except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()

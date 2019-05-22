@@ -76,7 +76,7 @@ class Server:
             elif SPECIAL_CHARS["send_file"] == data:  # send files to the client
                 self.send_file(conn)
         except ConnectionError or TypeError or socket.error:
-            conn.send(dumps(False))
+            pass
 
     def handle_sending(self, conn):
         pass
@@ -178,7 +178,20 @@ class Server:
 if __name__ == "__main__":
     server = Server()
     sleep(0.5)
-    while input("enter stop to close the server: ") != "stop":
-        pass
-    server.socket.close()
-    sys.exit()
+    running = True
+    print("(H)elp")
+    while running:
+        i = input()
+        if i == "H":
+            print("""
+            H - help
+            exit - stop and exit server
+            conn - show existing sockets
+            """)
+        elif i == "exit":
+            server.socket.close()
+            sys.exit()
+        elif i == "conn":
+            for conn in server.clients:
+                print(conn.getsockname())
+        sleep(0.2)
