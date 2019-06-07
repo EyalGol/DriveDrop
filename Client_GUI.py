@@ -1,5 +1,6 @@
 import wx
 import wx.xrc
+import wx.lib.agw.hyperlink as hl
 
 from Client import *
 
@@ -301,6 +302,14 @@ class LoginDialog(wx.Dialog):
         password_sizer.Add(self.login_password, 1, wx.ALL, 5)
 
         _login_sizer.Add(password_sizer, 1, wx.EXPAND | wx.RIGHT, 20)
+
+        link_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        link = hl.HyperLinkCtrl(self, wx.ID_ANY, u"Register", wx.DefaultPosition, wx.DefaultSize, 0, URL="http://localhost:8000/rest-auth/registration/")
+
+        link_sizer.Add(link, 0, wx.EXPAND | wx.ALIGN_CENTER, wx.TOP, 5)
+
+        _login_sizer.Add(link_sizer, 1, wx.EXPAND | wx.ALIGN_CENTER, 20)
 
         self.login_status = wx.StaticText(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
         self.login_status.Wrap(-1)
