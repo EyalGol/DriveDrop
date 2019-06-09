@@ -1,6 +1,5 @@
 import wx
 import wx.xrc
-import wx.lib.agw.hyperlink as hl
 
 from Client import *
 
@@ -273,7 +272,7 @@ class SendDialog(wx.Dialog):
 class LoginDialog(wx.Dialog):
 
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Lgoin", pos=wx.DefaultPosition, size=wx.Size(642, 227),
+        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Login", pos=wx.DefaultPosition, size=wx.Size(642, 246),
                            style=wx.DEFAULT_DIALOG_STYLE)
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
@@ -303,14 +302,6 @@ class LoginDialog(wx.Dialog):
 
         _login_sizer.Add(password_sizer, 1, wx.EXPAND | wx.RIGHT, 20)
 
-        link_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        link = hl.HyperLinkCtrl(self, wx.ID_ANY, u"Register", wx.DefaultPosition, wx.DefaultSize, 0, URL="http://localhost:8000/rest-auth/registration/")
-
-        link_sizer.Add(link, 0, wx.EXPAND | wx.ALIGN_CENTER, wx.TOP, 5)
-
-        _login_sizer.Add(link_sizer, 1, wx.EXPAND | wx.ALIGN_CENTER, 20)
-
         self.login_status = wx.StaticText(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
         self.login_status.Wrap(-1)
         self.login_status.SetFont(wx.Font(wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString))
@@ -320,12 +311,17 @@ class LoginDialog(wx.Dialog):
 
         _login_sizer.Add(self.login_status, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
+        self.register_button = wx.Button(self, wx.ID_ANY, u"Register", wx.DefaultPosition, wx.DefaultSize, 0)
+        _login_sizer.Add(self.register_button, 0, wx.ALIGN_CENTER_HORIZONTAL, 5)
+
         login_button_sizer = wx.StdDialogButtonSizer()
-        self.login_button_sizerOK = wx.Button(self, wx.ID_OK)
-        login_button_sizer.AddButton(self.login_button_sizerOK)
+        self.login_button_sizer_ok = wx.Button(self, wx.ID_OK)
+        login_button_sizer.AddButton(self.login_button_sizer_ok)
+        self.login_button_sizer_cancel = wx.Button(self, wx.ID_CANCEL)
+        login_button_sizer.AddButton(self.login_button_sizer_cancel)
         login_button_sizer.Realize()
 
-        _login_sizer.Add(login_button_sizer, 5, wx.ALIGN_CENTER, 5)
+        _login_sizer.Add(login_button_sizer, 5, wx.ALIGN_CENTER | wx.ALL, 5)
 
         self.SetSizer(_login_sizer)
         self.Layout()
@@ -333,7 +329,9 @@ class LoginDialog(wx.Dialog):
         self.Centre(wx.BOTH)
 
         # Connect Events
-        self.login_button_sizerOK.Bind(wx.EVT_BUTTON, self.handle_auth)
+        self.register_button.Bind(wx.EVT_BUTTON, self.register)
+        self.login_button_sizer_cancel.Bind(wx.EVT_BUTTON, self.exit_application)
+        self.login_button_sizer_ok.Bind(wx.EVT_BUTTON, self.handle_auth)
 
     def __del__(self):
         pass
@@ -358,6 +356,137 @@ class LoginDialog(wx.Dialog):
                 self.login_status.Show()
                 self.Layout()
 
+    def register(self, event):
+        self.Destroy()
+        RegisterDialog(self.Parent).ShowModal()
+
+    def exit_application(self, event):
+        self.Parent.Close(True)
+
+
+class RegisterDialog(wx.Dialog):
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Register", pos=wx.DefaultPosition,
+                           size=wx.Size(642, 338), style=wx.DEFAULT_DIALOG_STYLE)
+
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+
+        _register_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        username_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.username_text = wx.StaticText(self, wx.ID_ANY, u"Username:", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.username_text.Wrap(-1)
+        username_sizer.Add(self.username_text, 0, wx.ALL, 5)
+
+        self.username = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+        username_sizer.Add(self.username, 1, wx.ALL, 5)
+
+        _register_sizer.Add(username_sizer, 1, wx.ALL | wx.EXPAND, 5)
+
+        email_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.email_text = wx.StaticText(self, wx.ID_ANY, u"Email:", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.email_text.Wrap(-1)
+        email_sizer.Add(self.email_text, 0, wx.ALL, 5)
+
+        self.email = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+        email_sizer.Add(self.email, 1, wx.ALL, 5)
+
+        _register_sizer.Add(email_sizer, 1, wx.ALL | wx.EXPAND, 5)
+
+        password_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.password_text = wx.StaticText(self, wx.ID_ANY, u"Password: ", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.password_text.Wrap(-1)
+        password_sizer.Add(self.password_text, 0, wx.ALL, 5)
+
+        self.password = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,
+                                    wx.TE_NOHIDESEL | wx.TE_PASSWORD)
+        password_sizer.Add(self.password, 1, wx.ALL, 5)
+
+        _register_sizer.Add(password_sizer, 1, wx.ALL | wx.EXPAND, 5)
+
+        repeat_password_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.repeat_password_text = wx.StaticText(self, wx.ID_ANY, u"Repeat password: ", wx.DefaultPosition,
+                                                  wx.DefaultSize, 0)
+        self.repeat_password_text.Wrap(-1)
+        repeat_password_sizer.Add(self.repeat_password_text, 0, wx.ALL, 5)
+
+        self.repeat_password = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,
+                                           wx.TE_NOHIDESEL | wx.TE_PASSWORD)
+        repeat_password_sizer.Add(self.repeat_password, 1, wx.ALL, 5)
+
+        _register_sizer.Add(repeat_password_sizer, 1, wx.ALL | wx.EXPAND, 5)
+
+        self.register_status = wx.StaticText(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.register_status.Wrap(-1)
+        self.register_status.SetFont(wx.Font(wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString))
+        self.register_status.SetForegroundColour(wx.Colour(255, 0, 0))
+        self.register_status.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+        self.register_status.Hide()
+
+        _register_sizer.Add(self.register_status, 0, wx.ALIGN_CENTER | wx.ALL, 5)
+
+        register_button_sizer = wx.StdDialogButtonSizer()
+        self.login_button_sizer_ok = wx.Button(self, wx.ID_OK)
+        register_button_sizer.AddButton(self.login_button_sizer_ok)
+        self.register_button_sizer_cancel = wx.Button(self, wx.ID_CANCEL)
+        register_button_sizer.AddButton(self.register_button_sizer_cancel)
+        register_button_sizer.Realize()
+
+        _register_sizer.Add(register_button_sizer, 5, wx.ALIGN_CENTER | wx.ALL, 5)
+
+        self.SetSizer(_register_sizer)
+        self.Layout()
+
+        self.Centre(wx.BOTH)
+
+        # Connect Events
+        self.register_button_sizer_cancel.Bind(wx.EVT_BUTTON, self.kill_register_dialog)
+        self.login_button_sizer_ok.Bind(wx.EVT_BUTTON, self.handle_register)
+
+    def __del__(self):
+        pass
+
+    # Virtual event handlers, overide them in your derived class
+    def kill_register_dialog(self, event=None):
+        self.Destroy()
+        LoginDialog(self.Parent).ShowModal()
+
+    def handle_register(self, event):
+        global CLIENT
+        if not CLIENT:
+            CLIENT = Client()
+        username = self.username.GetValue()
+        email = self.email.GetValue()
+        password = self.password.GetValue()
+        password2 = self.repeat_password.GetValue()
+
+        if not username or not password or not password2 or not email:
+            self.register_status.SetLabelText("Please Enter Your Credentials")
+            self.register_status.Show()
+            self.Layout()
+        elif password != password2:
+            self.register_status.SetLabelText("Passwords don't match")
+            self.register_status.Show()
+            self.Layout()
+        else:
+            data = {"username": username, "email": email, "password1": password, "password2": password2}
+            reaction = CLIENT.register(data)
+            if reaction:
+                self.register_status.SetLabelText("Passwords don't match")
+                self.register_status.Show()
+                self.Layout()
+                sleep(2)
+                self.kill_register_dialog()
+            else:
+                self.register_status.SetLabelText("Wrong format")
+                self.register_status.Show()
+                self.Layout()
+
 
 if __name__ == "__main__":
     app = wx.App(False)
@@ -365,4 +494,5 @@ if __name__ == "__main__":
     frame.Show()
     LoginDialog(frame).ShowModal()
     app.MainLoop()
-    CLIENT.socket.close()
+    if CLIENT:
+        CLIENT.socket.close()

@@ -1,13 +1,13 @@
-import socket
-import threading
-from _pickle import dumps, loads
-from base64 import b64decode, b64encode
-from Encryption import *
-from time import sleep
-import sys
-from select import select
-import requests
 import json
+import socket
+import sys
+import threading
+from select import select
+from time import sleep
+
+import requests
+
+from Encryption import *
 
 IP = "localhost"
 PORT = 6667
@@ -15,7 +15,8 @@ ADDRESS = (IP, PORT)
 MAX_USERS = 30
 RSA = RsaUtil()
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
-                 "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/"}
+                 "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/",
+                 "register": b"/r0101a/"}
 SHARED_FILES = os.path.join(".", "file_db")
 TMP_PATH = os.path.join(".", "tmp")
 
@@ -75,6 +76,8 @@ class Server:
                 self.list_files(conn)
             elif SPECIAL_CHARS["send_file"] == data:  # send files to the client
                 self.send_file(conn)
+            elif SPECIAL_CHARS["register"] == data:
+                self.register(conn)
         except ConnectionError or TypeError or socket.error:
             pass
 
@@ -173,6 +176,20 @@ class Server:
             del self.clients[conn]
         except FileNotFoundError:
             conn.send(b"The Requested file doesn't exist")
+
+    def register(self, conn):
+        try:
+            conn.send(SPECIAL_CHARS["continue"])
+            data = loads(conn.recv(4112))
+            data = json.loads(AesUtil.decrypt_plaintext(data[0], self.clients[conn], data[1]))
+            if data:
+                data = requests.post('http://127.0.0.1:8000/rest-auth/registration/', data=data)
+            if data.status_code == 500:
+                conn.send(dumps(True))
+            else:
+                conn.send(dumps(False))
+        except ConnectionError or TypeError or socket.error:
+            del self.clients[conn]
 
 
 if __name__ == "__main__":

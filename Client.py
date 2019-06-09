@@ -1,19 +1,17 @@
-import socket
-from _pickle import dumps, loads
-from base64 import b64decode, b64encode
-from Encryption import *
-from Crypto.PublicKey import RSA
-import os
 import json
-from time import sleep
+import socket
 import sys
+from time import sleep
+
+from Encryption import *
 
 IP = "localhost"
 PORT = 6667
 WAIT_INTERVAL = 1
 ADDRESS = (IP, PORT)
 SPECIAL_CHARS = {"interrupt": b"/i0101i/", "recv_file_command": b"/r0101f/", "continue": b"/n0101n/",
-                 "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/"}
+                 "authenticate": b"/a0101a/", "list_files": b"/l0101f/", "send_file": b"/r0101r/",
+                 "register": b"/r0101a/"}
 TMP_PATH = os.path.join(".", "tmp")
 RECIEVED_FILES = os.path.join(".", "recv_files")
 
@@ -91,6 +89,22 @@ class Client:
                 self.groups = groups
                 return True
             return False
+        except ConnectionError or socket.error:
+            self.socket.close()
+            self.init_connection()
+        except Exception as err:
+            print(err)
+            return "Failed"
+
+    def register(self, data):
+        try:
+            self.socket.send(SPECIAL_CHARS["register"])
+            self.socket.recv(128)
+            self.socket.send(dumps(AesUtil.encrypt_plaintext(json.dumps(data), self.key)))
+            data = loads(self.socket.recv(2056))
+            if data:
+                return True
+            return data
         except ConnectionError or socket.error:
             self.socket.close()
             self.init_connection()
