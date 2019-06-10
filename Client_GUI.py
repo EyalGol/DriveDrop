@@ -1,7 +1,7 @@
 import wx
 import wx.xrc
 
-from Client import *
+from oldClient import *
 
 CLIENT = None
 
